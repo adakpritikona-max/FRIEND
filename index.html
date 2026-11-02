@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRIEND - Sign Up</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 25px 0;
+  font-family: Arial, sans-serif;
+  background: #edf3ff;
+}
+
+.signup-box {
+  background: white;
+  width: 90%;
+  max-width: 400px;
+  margin: auto;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 5px 20px #0002;
+}
+
+.logo {
+  font-size: 38px;
+  font-weight: bold;
+  color: #1877f2;
+}
+
+p { color: #777; }
+
+input {
+  width: 100%;
+  padding: 14px;
+  margin: 9px 0;
+  border: 1px solid #ddd;
+  border-radius: 9px;
+  font-size: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-size: 17px;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+button:disabled {
+  opacity: 0.6;
+}
+
+#message {
+  margin-top: 15px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+</style>
+</head>
+
+<body>
+
+<div class="signup-box">
+  <div class="logo">FRIEND</div>
+  <p>Connect • Share • Make Friends</p>
+
+  <h2>Create New Account</h2>
+
+  <form id="signupForm">
+    <input id="fullName" type="text"
+      placeholder="Full Name" required maxlength="60">
+
+    <input id="email" type="email"
+      placeholder="Email Address" required>
+
+    <input id="password" type="password"
+      placeholder="Create Password" minlength="8" required>
+
+    <input id="confirmPassword" type="password"
+      placeholder="Confirm Password" minlength="8" required>
+
+    <button id="signupButton" type="submit">
+      Create Account
+    </button>
+  </form>
+
+  <div id="message" role="status"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification
+} from
+"https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBVGiPrbS-mp2jy2TEcnqq5SPonwna7R3Y",
+  authDomain: "friend-2b68d.firebaseapp.com",
+  projectId: "friend-2b68d",
+  storageBucket: "friend-2b68d.firebasestorage.app",
+  messagingSenderId: "745646409273",
+  appId: "1:646409273:web:3cf2fe6acd8d1ab724efe8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const form = document.getElementById("signupForm");
+const message = document.getElementById("message");
+const button = document.getElementById("signupButton");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const name = document.getElementById("fullName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword =
+    document.getElementById("confirmPassword").value;
+
+  if (password !== confirmPassword) {
+    message.textContent = "দুটি Password মিলছে না!";
+    return;
+  }
+
+  if (password.length < 8) {
+    message.textContent = "Password কমপক্ষে ৮ অক্ষরের হতে হবে।";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Account তৈরি হচ্ছে...";
+
+  try {
+    const result = await createUserWithEmailAndPassword(
+      auth, email, password
+    );
+
+    await updateProfile(result.user, {
+      displayName: name
+    });
+
+    try {
+      await sendEmailVerification(result.user);
+      message.textContent =
+        "অ্যাকাউন্ট তৈরি হয়েছে! আপনার Email-এ Verification Link পাঠানো হয়েছে। Email যাচাই করুন।";
+    } catch (verificationError) {
+      message.textContent =
+        "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু Verification Email পাঠানো যায়নি। পরে আবার চেষ্টা করুন।";
+    }
+
+    form.reset();
+
+  } catch (error) {
+    if (error.code === "auth/email-already-in-use") {
+      message.textContent = "এই Email দিয়ে আগে Account খোলা হয়েছে।";
+    } else if (error.code === "auth/invalid-email") {
+      message.textContent = "সঠিক Email Address দিন।";
+    } else if (error.code === "auth/weak-password") {
+      message.textContent = "আরও শক্তিশালী Password দিন।";
+    } else {
+      message.textContent = "সমস্যা হয়েছে: " + error.message;
+    }
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
